@@ -9,6 +9,7 @@ import (
 
 	"github.com/Celudor/gogator/internal/database"
 	"github.com/Celudor/gogator/internal/rss"
+	"github.com/google/uuid"
 )
 
 func handlerAgg(s *state, cmd command) error {
@@ -46,7 +47,20 @@ func scrapeFeeds(s* state) error {
 		return err
 	}
 	for _, item := range rssFeed.Channel.Item {
-		fmt.Println(item.Title)
+		pubTime, err := time.Parse(time.UnixDate, item.PubDate)
+		if err != nil {
+			pubTime = time.Now()
+		}
+		s.db.CreatePost(context.Background(), database.CreatePostParams{
+			ID: uuid.New(),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+			Title: item.Title,
+			Url: item.Link,
+			Description: sql.NullString{String: item.Description, Valid: true},
+			PublishedAt: pubTime,
+			FeedID: feed.ID,
+		})
 	}
 	return nil
 }
